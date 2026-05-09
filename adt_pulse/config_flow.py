@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from collections.abc import Mapping
 
 import aiohttp
 import voluptuous as vol
@@ -76,7 +77,47 @@ class ADTPulseConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_reauth(
-        self, user_input: dict[str, Any] | None = None
+        self, entry_data: Mapping[str, Any]
     ) -> ConfigFlowResult:
         """Handle re-authentication when credentials expire."""
-        return await self.async_step_user(user_input)
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Show re-auth form and update the existing entry on success."""
+        errors: dict[str, str] = {}
+        reauth_entry = self._get_reauth_entry()
+
+        if user_input is not None:
+            session = async_get_clientsession(self.hass)
+            api = ADTPulseAPI(
+                username=user_input[CONF_USERNAME],
+                password=user_input[CONF_PASSWORD],
+                fingerprint=user_input[CONF_FINGERPRINT],
+                session=session,
+            )
+            try:
+                await api.async_login()
+            except ADTPulseAuthError:
+                errors["base"] = "invalid_auth"
+            except ADTPulseAPIError:
+                errors["base"] = "cannot_connect"
+            except Exception:  # noqa: BLE001
+                _LOGGER.exception("Unexpected error during ADT Pulse re-auth")
+                errors["base"] = "unknown"
+            else:
+                await api.async_logout()
+                return self.async_update_reload_and_abort(
+                    reauth_entry,
+                    data_updates=user_input,
+                )
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=self.add_suggested_values_to_schema(
+                STEP_USER_DATA_SCHEMA,
+                reauth_entry.data,
+            ),
+            errors=errors,
+        )

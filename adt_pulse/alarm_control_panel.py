@@ -9,7 +9,7 @@ from homeassistant.components.alarm_control_panel import (
     AlarmControlPanelState,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -72,20 +72,6 @@ class ADTPulseAlarmPanel(
             manufacturer=MANUFACTURER,
             model="Security Panel",
         )
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._update_state()
-        super()._handle_coordinator_update()
-
-    def _update_state(self) -> None:
-        panel = self.coordinator.data.panel
-        if panel.is_alarm:
-            self._attr_alarm_state = AlarmControlPanelState.TRIGGERED
-        else:
-            self._attr_alarm_state = _ARM_STATE_TO_HA.get(
-                panel.arm_state, AlarmControlPanelState.DISARMED
-            )
 
     @property
     def alarm_state(self) -> AlarmControlPanelState | None:

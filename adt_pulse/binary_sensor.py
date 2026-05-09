@@ -66,7 +66,7 @@ async def async_setup_entry(
         if new_entities:
             async_add_entities(new_entities)
 
-    coordinator.async_add_listener(_add_new_sensors)
+    entry.async_on_unload(coordinator.async_add_listener(_add_new_sensors))
 
     if coordinator.data:
         _add_new_sensors()

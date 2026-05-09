@@ -43,4 +43,6 @@ class ADTPulseCoordinator(DataUpdateCoordinator[ADTPulseData]):
             # Credentials are wrong — require the user to re-configure
             raise ConfigEntryAuthFailed(str(err)) from err
         except ADTPulseAPIError as err:
+            # Network error or expired session; force re-login on next poll
+            self.api.reset_authentication()
             raise UpdateFailed(str(err)) from err

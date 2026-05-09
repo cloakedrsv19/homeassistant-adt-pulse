@@ -224,11 +224,10 @@ class ADTPulseAPI:
     async def async_fetch_all(self) -> ADTPulseData:
         """Fetch panel status, sensors, and gateway info in parallel."""
         self._ensure_authenticated()
-        panel_task = asyncio.create_task(self._async_get_panel_status())
-        sensors_task = asyncio.create_task(self._async_get_sensors())
-        gateway_task = asyncio.create_task(self._async_get_gateway())
         panel, sensors, gateway = await asyncio.gather(
-            panel_task, sensors_task, gateway_task
+            self._async_get_panel_status(),
+            self._async_get_sensors(),
+            self._async_get_gateway(),
         )
         return ADTPulseData(panel=panel, sensors=sensors, gateway=gateway)
 
@@ -247,6 +246,7 @@ class ADTPulseAPI:
             "sat": self._sat_code or "",
             "arm": arm,
             "armState": current_arm,
+            "networkid": self._network_id or "",
         }
         headers = {
             **REQUEST_HEADERS,
@@ -309,6 +309,10 @@ class ADTPulseAPI:
     # ------------------------------------------------------------------ #
     # Internal helpers                                                     #
     # ------------------------------------------------------------------ #
+
+    def reset_authentication(self) -> None:
+        """Mark session as unauthenticated so the next call triggers re-login."""
+        self._is_authenticated = False
 
     def _ensure_authenticated(self) -> None:
         if not self._is_authenticated:
