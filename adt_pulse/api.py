@@ -6,7 +6,6 @@ import logging
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Any
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -171,7 +170,7 @@ class ADTPulseAPI:
                 ssl=True,
             ) as resp:
                 if resp.status not in (200, 302):
-                    raise ADTPulseAuthError(
+                    raise ADTPulseAPIError(
                         f"Login returned HTTP {resp.status}"
                     )
                 final_url = str(resp.url)
@@ -405,8 +404,8 @@ class ADTPulseAPI:
 
             # Typical columns: Name | Zone | Type | Status
             name = cells[0].get_text(strip=True)
-            zone = cells[1].get_text(strip=True) if len(cells) > 1 else ""
-            raw_type = cells[2].get_text(strip=True).lower() if len(cells) > 2 else ""
+            zone = cells[1].get_text(strip=True)
+            raw_type = cells[2].get_text(strip=True).lower()
             status_cell = cells[3] if len(cells) > 3 else cells[-1]
             status_text = status_cell.get_text(strip=True).lower()
 
