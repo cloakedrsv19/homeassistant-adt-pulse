@@ -4,7 +4,6 @@ DOMAIN = "adt_pulse"
 MANUFACTURER = "ADT"
 
 CONF_FINGERPRINT = "fingerprint"
-CONF_NETWORK_ID = "network_id"
 
 ADT_PULSE_HOST = "https://portal.adtpulse.com"
 ADT_PULSE_LOGIN_PATH = "/myhome/{version}/access/signin.jsp?e=ns&partner=adt"
@@ -37,13 +36,6 @@ SENSOR_TYPE_HEAT = "heat"
 SENSOR_TYPE_MOTION = "motion"
 SENSOR_TYPE_SHOCK = "shock"
 SENSOR_TYPE_TEMPERATURE = "temperature"
-
-# Panel states as reported by the portal
-PANEL_STATUS_DISARMED = "All Quiet"
-PANEL_STATUS_ARMED_AWAY = "Armed Away"
-PANEL_STATUS_ARMED_STAY = "Armed Stay"
-PANEL_STATUS_ARMED_NIGHT = "Armed Night"
-PANEL_STATUS_ALARM = "Alarm"
 
 # HTTP headers mimicking a real browser
 REQUEST_HEADERS = {

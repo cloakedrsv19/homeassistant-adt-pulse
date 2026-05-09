@@ -6,7 +6,6 @@ import logging
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Any
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -171,7 +170,7 @@ class ADTPulseAPI:
                 ssl=True,
             ) as resp:
                 if resp.status not in (200, 302):
-                    raise ADTPulseAuthError(
+                    raise ADTPulseAPIError(
                         f"Login returned HTTP {resp.status}"
                     )
                 final_url = str(resp.url)
@@ -224,11 +223,10 @@ class ADTPulseAPI:
     async def async_fetch_all(self) -> ADTPulseData:
         """Fetch panel status, sensors, and gateway info in parallel."""
         self._ensure_authenticated()
-        panel_task = asyncio.create_task(self._async_get_panel_status())
-        sensors_task = asyncio.create_task(self._async_get_sensors())
-        gateway_task = asyncio.create_task(self._async_get_gateway())
         panel, sensors, gateway = await asyncio.gather(
-            panel_task, sensors_task, gateway_task
+            self._async_get_panel_status(),
+            self._async_get_sensors(),
+            self._async_get_gateway(),
         )
         return ADTPulseData(panel=panel, sensors=sensors, gateway=gateway)
 
@@ -247,6 +245,7 @@ class ADTPulseAPI:
             "sat": self._sat_code or "",
             "arm": arm,
             "armState": current_arm,
+            "networkid": self._network_id or "",
         }
         headers = {
             **REQUEST_HEADERS,
@@ -309,6 +308,10 @@ class ADTPulseAPI:
     # ------------------------------------------------------------------ #
     # Internal helpers                                                     #
     # ------------------------------------------------------------------ #
+
+    def reset_authentication(self) -> None:
+        """Mark session as unauthenticated so the next call triggers re-login."""
+        self._is_authenticated = False
 
     def _ensure_authenticated(self) -> None:
         if not self._is_authenticated:
@@ -401,8 +404,8 @@ class ADTPulseAPI:
 
             # Typical columns: Name | Zone | Type | Status
             name = cells[0].get_text(strip=True)
-            zone = cells[1].get_text(strip=True) if len(cells) > 1 else ""
-            raw_type = cells[2].get_text(strip=True).lower() if len(cells) > 2 else ""
+            zone = cells[1].get_text(strip=True)
+            raw_type = cells[2].get_text(strip=True).lower()
             status_cell = cells[3] if len(cells) > 3 else cells[-1]
             status_text = status_cell.get_text(strip=True).lower()
 
